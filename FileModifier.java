@@ -1,6 +1,11 @@
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 
 /*
@@ -8,7 +13,7 @@ import java.util.ArrayList;
  */
 
 
-public class FileModifier implements Readable
+public class FileModifier implements Readable, Writeable
 {
 
 	private String extension = "";
@@ -376,19 +381,207 @@ public class FileModifier implements Readable
 			e.printStackTrace();
 		}
 		
+		//Error message if index is not found
 		System.out.println("Character at index "+letterIndex+" Does not exist");
 		return ' ';
 	}
 	
+	public void overwrite(ArrayList<String> newLines) 
+	{
+		//Try catch to ensure file exists to overwrite
+		try 
+		{
+			PrintWriter writer = new PrintWriter(filename);
+			
+			//For loop to go through every index in the newLines array to write into the file
+			for (int i = 0; i < newLines.size(); i++)
+			{
+				writer.println(newLines.get(i));
+			}
+			
+			//Closes the file to avoid memory leak
+			writer.close();
+		} 
+		
+		catch (FileNotFoundException e) 
+		{
+			e.printStackTrace();
+		}
+	}
+
+
+	public void overwriteSection(int startIndex, int endIndex, ArrayList<String> newWords) 
+	{
+		try 
+		{
+			//Arraylist to store all words into list attribute
+			ArrayList<String> list = this.readAll();
+			PrintWriter writer = new PrintWriter(filename);
+			
+			//Counter to act as a index for the newWords array to replace the old words in the file
+			int counter = 0;
+			
+			//Forloop to cycle through the entire set of words and write the desired words into the file
+			for (int i = 0; i < list.size(); i++)
+			{
+				
+				//Sets all items in list to have a leading space to allow for correct writing
+				list.set(i, list.get(i)+'\s');
+				
+				//if statment to replace desired words with the items in newWords
+				if(i>=startIndex && i<=endIndex)
+				{
+					//sets leading space for new word
+					list.set(i, newWords.get(counter)+'\s');
+					
+					//increments counter for next occurance of newWords
+					counter+=1;
+				}
+				
+				//gets empty line and changes writer to the next line if found
+				if(list.get(i).equals(" "))
+				{
+					writer.println(list.get(i));
+				}
+				else
+				{
+					//writes the index i in list into the file
+					writer.write(list.get(i));
+				}
+			}
+			
+			//closes writer to avoid memory leak
+			writer.close();
+		} 
+		
+		catch (FileNotFoundException e) 
+		{
+			e.printStackTrace();
+		}
+	}
+
+	public void overwritelines(int startLine, int endLine, ArrayList<String> newLines)
+	{
+		try
+		{
+			//Calls file and reader objects to read through the file
+			File file = new File(filename);
+			BufferedReader reader = new BufferedReader(new FileReader(file));
+			
+			//Arraylists to hold the lines before the lines desired to be replaced
+			ArrayList<String> before = new ArrayList<String>();
+			
+			//Arralist to hold the lines after the lines desired to be replaced
+			ArrayList<String> after = new ArrayList<String>();
+			
+			//Arraylist to hold all the lines to be written including the new lines
+			ArrayList<String> full = new ArrayList<String>();
+			
+			//placeholder attribute to store each line in a file
+			String line;
+			
+			//index to cycle through each newLine
+			int newlineIndex = 0;
+			
+			//attribute to keep track of line number
+			int lineNum = 0;
+			
+			//while loop to cycle through each line in the file
+			while((line = reader.readLine())!=null)
+			{
+				//if statement to find all lines before the desired lines to be changed
+				if(lineNum<startLine)
+				{
+					before.add(line);
+				}
+				
+				//if statement to find all the lines after the lines desired to be changed
+				else if (lineNum>endLine)
+				{
+					after.add(line);
+				}
+				
+				//iterates lineNum
+				lineNum += 1;
+			}
+			
+			//Adds all lines including the new lines into the full array
+			full.addAll(before);
+			full.addAll(newLines);
+			full.addAll(after);
+			
+			//calls writer object which overwrites old file
+			PrintWriter writer = new PrintWriter(filename);
+			
+			//for loop to cycle through full array and add all items into the file
+			for(int i = 0; i < full.size(); i++)
+			{
+				writer.println(full.get(i));
+			}
+			
+			//closes writer
+			writer.close();
+			
+		}
+		catch(Exception e)
+		{
+			e.printStackTrace();
+		}
+	}
+	
+	public void append(ArrayList<String> newLines) 
+	{
+		try 
+		{
+			FileWriter writer = new FileWriter(filename, true);
+			BufferedWriter Bwriter = new BufferedWriter(writer);
+			PrintWriter Pwriter = new PrintWriter(Bwriter);
+			
+			for (int i = 0; i < newLines.size(); i++)
+			{
+				Pwriter.append(newLines.get(i));
+			}
+			
+			Pwriter.close();
+			Bwriter.close();
+			writer.close();
+			
+		} 
+		catch (FileNotFoundException e) 
+		{
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+
 	public static void main(String args[])
 	{
 		FileModifier a = new FileModifier("test.txt");
+		ArrayList<String> arr = new ArrayList<>();
+		ArrayList<String> newLines = new ArrayList<>();
+		ArrayList<String> newLines2 = new ArrayList<>();
+		newLines.add("one one2 one3 one4");
+		newLines.add("two two2 two3 two4");
+		newLines.add("three three2 three3 three4");
+		newLines2.add("test line");
+		newLines2.add("test line2");
+		arr.add("test");
+		arr.add("test2");
+		arr.add("test3");
 		
-		list1=a.readSection(0,5,',');
-		System.out.println(a.readChar(5, 9));
-		System.out.println(list1);
-	}
+		a.overwrite(newLines);
 
+		a.append(newLines2);
+		list1=a.readAll();
+		//System.out.println(a.readChar(5, 9));
+		System.out.println(list1);
+
+		
+		
+	}
 
 	
 }
