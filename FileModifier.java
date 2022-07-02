@@ -1,11 +1,14 @@
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.nio.channels.FileChannel;
 import java.util.ArrayList;
 
 /*
@@ -13,7 +16,7 @@ import java.util.ArrayList;
  */
 
 
-public class FileModifier implements Readable, Writeable
+public class FileModifier implements Readable, Writeable, Copyable, Deleteable
 {
 
 	private String extension = "";
@@ -531,17 +534,22 @@ public class FileModifier implements Readable, Writeable
 	
 	public void append(ArrayList<String> newLines) 
 	{
+		
+		//Try to ensure file exists
 		try 
 		{
+			//Writer objects
 			FileWriter writer = new FileWriter(filename, true);
 			BufferedWriter Bwriter = new BufferedWriter(writer);
 			PrintWriter Pwriter = new PrintWriter(Bwriter);
 			
+			//For loop to cycle through all new lines and append into the file
 			for (int i = 0; i < newLines.size(); i++)
 			{
 				Pwriter.append(newLines.get(i));
 			}
 			
+			//closes all objects
 			Pwriter.close();
 			Bwriter.close();
 			writer.close();
@@ -549,12 +557,131 @@ public class FileModifier implements Readable, Writeable
 		} 
 		catch (FileNotFoundException e) 
 		{
-			// TODO Auto-generated catch block
 			e.printStackTrace();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
+		} 
+		catch (IOException e) 
+		{
 			e.printStackTrace();
 		}
+	}
+	
+	public void copyAll(String fileDestination) 
+	{
+		
+		try 
+		{
+			  //Attributes to store source and destination files
+			  File file = new File(filename);
+		      File newFile = new File(fileDestination);
+		      
+		      //if statement to display if a new file has been created and get file path
+		      if (newFile.createNewFile()) 
+		      {
+		        System.out.println("File created: " + newFile.getName());
+		        System.out.println(newFile.getAbsolutePath());
+		      } 
+		      //else to display if file file already exists and get its path
+		      else 
+		      {
+		        System.out.println("File already exists.");
+		        System.out.println(newFile.getAbsolutePath());
+		      }
+		      
+		      //Attribute to hold file path of source and destination file path
+		      String filePath = file.getAbsolutePath();
+		      String newFilePath = newFile.getAbsolutePath();
+		      
+		      //File channels to hold source and destination path to allow copying
+		      @SuppressWarnings("resource")
+		      FileChannel src = new FileInputStream(filePath).getChannel();
+		      @SuppressWarnings("resource")
+		      FileChannel dest = new FileOutputStream(newFilePath).getChannel();
+		      
+		      //Function to copy from source file to destination file
+		      dest.transferFrom(src, 0, src.size());
+		      
+		      //closes source and destination file
+		      src.close();
+		      dest.close();
+		      
+		      
+		 } 
+		
+		//Catch to get any unexpected errors
+		catch (IOException e) 
+		{
+		      System.out.println("An error occurred.");
+		      e.printStackTrace();
+		}
+
+	}
+
+
+	public void copySection(String fileDestination, int startIndex, int endIndex) {
+		try 
+		{
+			  //Attributes to store source and destination paths and to ensure both files are created or that they already exist
+			  File file = new File(filename);
+		      File newFile = new File(fileDestination);
+		      
+		      //if statement to display if a new file has been created and get file path
+		      if (newFile.createNewFile()) 
+		      {
+		        System.out.println("File created: " + newFile.getName());
+		        System.out.println(newFile.getAbsolutePath());
+		      } 
+		      //else to display if file file already exists and get its path
+		      else 
+		      {
+		        System.out.println("File already exists.");
+		        System.out.println(newFile.getAbsolutePath());
+		      }
+		      
+		      //Attribute to hold file path of source and destination file path
+		      String filePath = file.getAbsolutePath();
+		      String newFilePath = newFile.getAbsolutePath();
+		      
+		      //File channels to hold source and destination path to allow copying
+		      @SuppressWarnings("resource")
+		      FileChannel src = new FileInputStream(filePath).getChannel();
+		      @SuppressWarnings("resource")
+		      FileChannel dest = new FileOutputStream(newFilePath).getChannel();
+		      
+		      //Calculates the difference in the index to get the size of the message to be copied
+		      int difference = endIndex - startIndex;
+		      
+		      //Function to copy from source file to destination file
+		      dest.transferFrom(src, startIndex, difference);
+		      
+		      //closes source and destination file
+		      src.close();
+		      dest.close();
+		          
+		 } 
+		//Catch to get any unexpected errors
+		catch (IOException e) 
+		{
+		      System.out.println("An error occurred.");
+		      e.printStackTrace();
+		}
+		
+	}
+	
+	public void delete() 
+	{
+		//Creates file object to allow the file to be deleted
+		File file = new File(filename);
+		
+		//If statement to check if file is  and prints message if file can be or cannot be deleted
+		if(file.delete())
+		{
+			System.out.println("File "+filename+" deleted");
+		}
+		else
+		{
+			System.out.println("File "+filename+" could not be deleted");
+		}
+		
 	}
 
 	public static void main(String args[])
@@ -578,6 +705,10 @@ public class FileModifier implements Readable, Writeable
 		list1=a.readAll();
 		//System.out.println(a.readChar(5, 9));
 		System.out.println(list1);
+		
+		a.copyAll("newFile3.txt");
+		a.copySection("newFile4.txt", 0, 4);
+		a.delete();
 
 		
 		
